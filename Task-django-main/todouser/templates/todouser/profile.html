@@ -1,0 +1,17 @@
+{% extends 'todouser/base.html' %}
+{% block content %}
+<div>
+    <div>
+        <button class="goback" onclick="goTo()">Go-Back</button>
+    </div>
+    <div class="profile">
+        <h3>Hello {{ user.username }},</h3>
+        <h3>Your E-mail was "{{ user.email }}"</h3>
+    </div>
+</div>
+<script>
+    function goTo(){
+        window.location.href = href="{% url 'todo-list' %}";
+    }
+</script>
+{% endblock %} 

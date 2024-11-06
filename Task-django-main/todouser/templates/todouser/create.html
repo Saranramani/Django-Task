@@ -1,0 +1,156 @@
+{% extends 'todouser/base.html' %}
+{% load static %}
+{% block content %}
+
+<div >
+    <div>
+        <button class="goback" onclick="goTo()">Go-Back</button>
+    </div>
+
+    <div class="create-container">
+        <form id="form-create" method="POST">
+            {% csrf_token %}
+            <label>Task Name*</label><br>
+            <input id="task-name" type="text" required autocomplete="off"
+            maxlength="100" class="task-cls"><br><br>
+
+            <label>Description</label><br>
+            <textarea id="task-desc" type="text" cols="40" rows="10" autocomplete="off"
+            class="desc-cls" ></textarea><br><br>
+
+            <label for="task-status">Status*</label><br>
+            <select id="task-status" class="task-sts">
+                <option value="select">select</option>
+                <option value="In-progress">In-progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Not-completed">Not-completed</option>
+            </select><br><br>
+
+            <label for="task-priority">Priority*</label><br>
+            <select id="task-priority" class="task-prty">
+                <option value="select">select</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select><br><br>
+
+            <label>Date of completion</label><br>
+            <input id="task-cmplt-date" type="date" required class="cmplt-date"><br><br>
+
+            <button class="btn-cls" id="add-task-btn" type="submit">Create</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function goTo(){
+        window.location.href = href="{% url 'todo-list' %}";
+    }
+
+    // Get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Add a new todo
+    function addTodo() {
+        const taskName = document.getElementById('task-name');
+        const description = document.getElementById('task-desc');
+        const task_status = document.getElementById('task-status');
+        const task_priority = document.getElementById('task-priority');
+        const completion_dat = document.getElementById('task-cmplt-date');
+        //const formUserId = document.getElementById('form-create');
+        //const userId = formUserId.dataset.userId;
+
+
+        // Check if status is "select" or give error
+        if (task_status.value === "select") {
+            alert('Please select the task status');
+            return;
+        }
+
+        // Check if priority is "select" or give error
+        if (task_priority.value === "select") {
+            alert('Please select the task priority');
+            return;
+        }
+
+        // Check if complation date is a previous date from today or give error
+        const currentDate = new Date().toISOString().slice(0, 10);
+        if (completion_dat.value < currentDate) {
+            alert('Please select a date that is not in the past.');
+            return;
+        }
+
+        const taskname = taskName.value;
+
+        const todoData = {
+            tname: taskName.value,
+            desc: description.value,
+            status: task_status.value,
+            priority: task_priority.value,
+            completion_date: completion_dat.value,
+            //user: userId,
+        };
+
+        // Get CSRF token from cookies
+        const csrfToken = getCookie('csrftoken');
+
+        // check if the task name is already exist or not and give error
+        fetch(`/duplicate_taskname/?tname=${encodeURIComponent(taskname)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,  // Add the CSRF token to the request header
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    alert('The taskname already exists!');
+                } else {
+                    // The taskname is unique, proceed to add the todo
+                    fetch('/addapi/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,  // Add the CSRF token to the request header
+                        },
+                        body: JSON.stringify(todoData),
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('success:', data);
+                            taskName.value = '';
+                            description.value = '';
+                            task_status.value = '';
+                            task_priority.value = '';
+                            completion_dat.value = '';
+                            //userId.value = '';
+                            window.location.href = '/';
+                            alert('Task added succesfully')
+                        })
+                        .catch(error => console.error('Post Error:', error));
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Add an event listener to the "Create" button
+    document.getElementById('form-create').addEventListener('submit', function (event) {
+        event.preventDefault();
+        addTodo();
+    });
+</script>
+{% endblock %}

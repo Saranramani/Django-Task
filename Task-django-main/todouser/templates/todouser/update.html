@@ -1,0 +1,127 @@
+{% extends 'todouser/base.html' %}
+{% block content %}
+
+<div>
+    <div>
+        <button class="goback" onclick="goTo()">Go-Back</button>
+    </div>
+
+    <div class="update-container">
+        <form id="update-form-data" method="PUT" data-pk="{{ todos.pk }}">
+            {% csrf_token %}
+
+            <input type="hidden" name="user_id" value="{{ user.id }}">
+
+            <label for="update-task-name">Task Name*</label><br>
+            <input required id="update-task-name" type="text" value="{{ todos.tname }}" autocomplete="off" class="task-cls"
+            ><br><br>
+
+            <label for="update-task-desc">Description</label><br>
+            <textarea id="update-task-desc" type="text" rows="4" cols="25" autocomplete="off" class="desc-cls"
+            >{{ todos.desc }}</textarea><br><br>
+
+            <label for="update-task-status">Status*</label><br>
+            <select required id="update-task-status" class="task-sts">
+                <option value="Completed" {% if todo.status == "Completed" %} selected {% endif %}>Completed</option>
+                <option value="In-progress" {% if todo.status == "In-progress" %} selected {% endif %}>In-progress
+                </option>
+                <option value="Not-completed" {% if todo.status == "Not-completed" %} selected {% endif %}>Not-completed
+                </option>
+            </select><br><br>
+            
+            <label for="update-task-priority">Priority*</label><br>
+            <select required id="update-task-priority" class="task-prty">
+                <option value="Low" {% if todo.priority == "Low" %} selected {% endif %}>Low</option>
+                <option value="Medium" {% if todo.priority == "Medium" %} selected {% endif %}>Medium</option>
+                <option value="High" {% if todo.priority == "High" %} selected {% endif %}>High</option>
+            </select><br><br>
+            
+            <button  class="update-btn" id="update-task-btn"
+                type="submit">Update</button>
+        </form>
+    </div>
+</div>
+
+<script>
+     
+    function goTo(){
+        window.location.href = href="{% url 'todo-list' %}";
+    }
+
+    function redirectToHome(){
+        window.location.href = href="{% url 'todo-list' %}";
+    }
+
+    // Fetch CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Update function to handle the form submission
+    function
+        updateTodo() {
+        const taskName = document.getElementById('update-task-name');
+        const description = document.getElementById('update-task-desc');
+        const task_status = document.getElementById('update-task-status');
+        const task_priority = document.getElementById('update-task-priority');
+        const pk = "{{ todos.pk }}";
+        const userId = "{{ user.id }}";
+
+        // Give alert message when taskname is empty
+        if (taskName.value.length < 1) {
+            alert('Taskname cannot be empty!');
+            return;
+        }
+
+        // Give alert message when description is empty
+        if (description.value.length < 1) {
+            alert('Description cannot be empty!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('tname', taskName.value);
+        formData.append('desc', description.value);
+        formData.append('status', task_status.value);
+        formData.append('priority', task_priority.value);
+        formData.append('user', userId);
+
+        const csrfToken = getCookie('csrftoken');
+
+        fetch(`/updateapi/${pk}/`, {
+            method: 'PATCH',
+            headers: {
+                'X-CSRFToken': csrfToken, // Add the CSRF token to the request header
+            },
+            body: formData
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Data updated successfully, and redirect to home page
+                    window.location.href = '/';
+                } else {
+                    console.error('Failed to update task!');
+                }
+            })
+            .catch(error => console.error('Update Error:', error));
+    }
+
+    // Add an event listener to the form submit button
+    const updateButton = document.querySelector('button[type="submit"]');
+    updateButton.addEventListener('click', function (event) {
+        event.preventDefault();
+        updateTodo()
+    });
+</script>
+{% endblock %} 

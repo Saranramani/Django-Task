@@ -1,0 +1,133 @@
+{% extends 'todouser/base.html' %}
+{% block content %}
+<div>
+
+    <button class="btn" onclick="goToAddTodoo()">New-todo</button>
+    <button class="btn" onclick="goToProfile()">Profile</button>
+    <button class="btn" type="submit" id="logoutButton">Logout</button>
+</div>
+<div class="taskname-container" id="task-name"> </div>
+
+<script>
+
+    function goToProfile(){
+        window.location.href = href="{% url 'profile' %}";
+    }
+
+    function goToAddTodoo(){
+        window.location.href = href="{% url 'todo-create' %}";
+    }
+
+    // Redirect to update page with id
+    function goToUpdate(todoId) {
+        window.location.href = `http://127.0.0.1:8000/updatetodo/${todoId}/`;
+    }
+
+    // Get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Delete todo 
+    function deleteTodo(todoId) {
+        const todoDelete = window.confirm('Are you sure you want to delete this todo?');
+        if (todoDelete) {
+            // Fetch CSRF token from cookies
+            const csrfToken = getCookie('csrftoken');
+
+            fetch(`/deleteapi/${todoId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken, // Add the CSRF token to the request header
+                },
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Todo has been deleted successfully.');
+                        window.location.href = '/';
+                    } else {
+                        console.error('Failed to delete todo!');
+                    }
+                })
+                .catch(error => console.error('Delete Error:', error));
+        }
+    }
+
+    // Fetch all todos
+    function fetchTodos() {
+        fetch('/listapi/')
+            .then(response => response.json())
+            .then(data => {
+                console.log('API Response:', data);
+                //if (Array.isArray(data) && data.length > 0) {
+                let todoList = '';
+                data.todos.forEach(todo => {
+                    todoList += `
+              <div style="font-size: large;" id="todo-js">
+                 <h3>TaskName : ${todo.tname}</h3>
+                 description : ${todo.desc}<br>
+                 Status of Task : ${todo.status}<br>
+                 Priority of Task : ${todo.priority}<br>
+                 Date of completion : ${todo.completion_date}<br>
+                 Task remaning days : ${todo.days_remaining}<br><br> 
+                 <div>
+                    <button class="up-btn" style="background-color:transparent; border:none;" onclick="goToUpdate(${todo.id})" type="button" ><i class="fas fa-pen-to-square"></i></button>
+                    <button class="dlt-btn" style="background-color:transparent; border:none; padding-left: 18px;" onclick="deleteTodo(${todo.id})" type="button" ><i class="fas fa-trash"></i></button>   
+                </div>
+              </div>`;
+                    //console.log(todoList);
+                })
+                document.getElementById('task-name').innerHTML = todoList;
+                //} else {
+                //  console.log('No todos found or invalid data format.');
+                //}
+            })
+            .catch((error) => {
+                console.log("errors ...!", error)
+            })
+    }
+
+    // Function to handle logout
+    function handleLogout() {
+        const csrfToken = getCookie('csrftoken');
+        // ask confirmation message when task was delete
+        const confirmLogout = window.confirm('Are you sure you want to logout');
+        if (confirmLogout) {
+            fetch('/logoutapi/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken, // Add the CSRF token to the request header
+                },
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // If logout successful, redirect to login page
+                        window.location.href = '{% url "login" %}';
+                        alert('logout succesfully!')
+                    } else {
+                        console.error('Failed to logout.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    }
+
+    // Add an event listener to the "Logout" button
+    const logoutButton = document.getElementById('logoutButton');
+    logoutButton.addEventListener('click', handleLogout);
+
+    document.addEventListener('DOMContentLoaded', fetchTodos);
+
+</script>
+{% endblock %}

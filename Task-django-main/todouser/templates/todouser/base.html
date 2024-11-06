@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" type="text/css" href="{% static 'todouser/main.css' %}">
+        <title>Todo-list</title>
+
+        <script src="https://kit.fontawesome.com/1bcca668a5.js" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <header>
+            <nav class="nav-bar">
+                <h1 class="h1-tag">TODO APPLICATION</h1>
+            </nav>
+        </header>
+        <main class="Body-content">
+            <div >
+                {% block content %} {% endblock %}
+            </div>
+        </main>
+    </body>
+</html>
